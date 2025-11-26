@@ -4,6 +4,8 @@ import com.academic.erp.salary.entity.EmployeeSalary;
 import com.academic.erp.salary.entity.SalaryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -14,4 +16,7 @@ public interface EmployeeSalaryRepository extends JpaRepository<EmployeeSalary, 
     List<EmployeeSalary> findByStatus(SalaryStatus status);
 
     List<EmployeeSalary> findByDisbursedBy_EmployeeId(int disbursedBy);
+
+    // Checks whether a salary record for the given employee and exact paymentDate exists
+    boolean existsByEmployeeEmployeeIdAndPaymentDate(int employeeId, LocalDate paymentDate);
 }

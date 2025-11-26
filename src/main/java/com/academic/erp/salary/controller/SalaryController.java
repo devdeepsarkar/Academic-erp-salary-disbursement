@@ -66,4 +66,17 @@ public class SalaryController {
                 salaryService.updateSalary(salaryId, updatedData, updatedById)
         );
     }
+
+    // 7. ADD NEW SALARY FOR AN EMPLOYEE
+    @PostMapping("/add/{employeeId}")
+    public ResponseEntity<EmployeeSalary> addSalary(
+            @PathVariable int employeeId,
+            @RequestBody EmployeeSalary newSalary,
+            @RequestParam int loggedInEmployeeId) {
+
+        return ResponseEntity.ok(
+                salaryService.addSalary(employeeId, newSalary, loggedInEmployeeId)
+        );
+    }
+
 }

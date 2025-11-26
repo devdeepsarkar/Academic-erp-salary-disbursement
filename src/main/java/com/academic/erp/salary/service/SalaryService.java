@@ -56,27 +56,50 @@ public class SalaryService {
             throw new RuntimeException("You cannot disburse your own salary!");
         }
 
+        // Allow disbursement only if salary is PENDING
+        if (salary.getStatus() != SalaryStatus.PENDING) {
+            throw new RuntimeException("Cannot disburse salary. Status must be PENDING!");
+        }
+
         // Update Salary Status
         salary.setStatus(SalaryStatus.DISBURSED);
-        salary.setDisbursedBy(employeeRepo.findById(loggedInEmployeeId).orElse(null));
+        salary.setDisbursedBy(employeeRepo.findById(loggedInEmployeeId)
+                .orElseThrow(() -> new RuntimeException("Employee performing disbursement not found!")));
         salary.setDisbursedAt(LocalDateTime.now());
 
         return salaryRepo.save(salary);
     }
 
+
     // ================================
     // 5. Bulk Disbursement
     // ================================
     public List<EmployeeSalary> bulkDisburse(List<Integer> salaryIds, int loggedInEmployeeId) {
-        List<EmployeeSalary> updatedList = new ArrayList<>();
+        List<EmployeeSalary> result = new ArrayList<>();
 
+        // First validate all before processing
         for (int id : salaryIds) {
-            EmployeeSalary salary = disburseSalary(id, loggedInEmployeeId);
-            updatedList.add(salary);
+            EmployeeSalary salary = salaryRepo.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Salary record not found: " + id));
+
+            if (salary.getEmployee().getEmployeeId() == loggedInEmployeeId) {
+                throw new RuntimeException("Cannot disburse your own salary. SalaryId: " + id);
+            }
+
+            if (salary.getStatus() != SalaryStatus.PENDING) {
+                throw new RuntimeException("Salary already disbursed: " + id);
+            }
         }
 
-        return updatedList;
+        // All valid → Now disburse
+        for (int id : salaryIds) {
+            EmployeeSalary salary = disburseSalary(id, loggedInEmployeeId);
+            result.add(salary);
+        }
+
+        return result;
     }
+
 
     // ================================
     // 6. Update Salary Amount / Metadata
@@ -102,5 +125,35 @@ public class SalaryService {
 
         return salaryRepo.save(existing);
     }
+
+    // ================================
+    // 7. Add new Salary for an Employee
+    // ================================
+    public EmployeeSalary addSalary(int employeeId, EmployeeSalary newSalary, int loggedInEmployeeId) {
+
+
+        // Check employee exists
+        Employee employee = employeeRepo.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found: " + employeeId));
+
+        // Prevent adding salary to themselves
+        if (employeeId == loggedInEmployeeId) {
+            throw new RuntimeException("You cannot add salary to yourself!");
+        }
+
+        // 4. Prevent duplicate salary for same month/date
+        if (salaryRepo.existsByEmployeeEmployeeIdAndPaymentDate(employeeId, newSalary.getPaymentDate())) {
+            throw new RuntimeException("Salary already exists for this employee and month!");
+        }
+
+        // Create new salary record
+        newSalary.setEmployee(employee);
+        newSalary.setStatus(SalaryStatus.PENDING);
+        newSalary.setUpdatedBy(employeeRepo.findById(loggedInEmployeeId).orElse(null));
+        newSalary.setUpdatedAt(LocalDateTime.now());
+
+        return salaryRepo.save(newSalary);
+    }
+
 
 }

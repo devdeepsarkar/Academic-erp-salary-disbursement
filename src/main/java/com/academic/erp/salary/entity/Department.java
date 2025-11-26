@@ -1,18 +1,21 @@
 package com.academic.erp.salary.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Data
 @Table(name = "departments")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Department {
 
     @Id
     @Column(name = "department_id")
-    private int departmentId;
+    private Integer departmentId;
 
     private String name;
-
-    private int capacity;
+    private Integer capacity;
 }

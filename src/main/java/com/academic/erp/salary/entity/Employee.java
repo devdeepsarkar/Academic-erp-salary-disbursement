@@ -1,17 +1,22 @@
 package com.academic.erp.salary.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Data
 @Table(name = "employees")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Employee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "employee_id")
-    private int employeeId;
+    private Integer employeeId;
 
     @Column(name = "first_name")
     private String firstName;
@@ -25,7 +30,8 @@ public class Employee {
     @Column(name = "photograph_path")
     private String photographPath;
 
-    @ManyToOne
-    @JoinColumn(name = "department")  // foreign key mapping
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Department department;
 }
