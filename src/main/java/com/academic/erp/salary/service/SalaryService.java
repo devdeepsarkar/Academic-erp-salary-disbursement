@@ -9,6 +9,7 @@ import com.academic.erp.salary.repository.EmployeeSalaryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -131,22 +132,22 @@ public class SalaryService {
     // ================================
     public EmployeeSalary addSalary(int employeeId, EmployeeSalary newSalary, int loggedInEmployeeId) {
 
-
-        // Check employee exists
         Employee employee = employeeRepo.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found: " + employeeId));
 
-        // Prevent adding salary to themselves
         if (employeeId == loggedInEmployeeId) {
             throw new RuntimeException("You cannot add salary to yourself!");
         }
 
-        // 4. Prevent duplicate salary for same month/date
+        // if frontend date is missing, set default
+        if (newSalary.getPaymentDate() == null) {
+            newSalary.setPaymentDate(LocalDate.now());
+        }
+
         if (salaryRepo.existsByEmployeeEmployeeIdAndPaymentDate(employeeId, newSalary.getPaymentDate())) {
             throw new RuntimeException("Salary already exists for this employee and month!");
         }
 
-        // Create new salary record
         newSalary.setEmployee(employee);
         newSalary.setStatus(SalaryStatus.PENDING);
         newSalary.setUpdatedBy(employeeRepo.findById(loggedInEmployeeId).orElse(null));
