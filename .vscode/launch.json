@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "AcademicErpSalaryDisbursementModuleApplication",
+            "request": "launch",
+            "mainClass": "AcademicErpSalaryDisbursementModuleApplication",
+            "projectName": "salary-disbursement"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-AcademicErpSalaryDisbursementModuleApplication<salary-disbursement>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.academic.erp.salary.AcademicErpSalaryDisbursementModuleApplication",
+            "projectName": "salary-disbursement",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

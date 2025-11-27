@@ -1,6 +1,8 @@
+
 package com.academic.erp.salary.controller;
 
 import com.academic.erp.salary.entity.EmployeeSalary;
+import com.academic.erp.salary.helper.EmployeeValidationHelper;
 import com.academic.erp.salary.service.SalaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -8,76 +10,88 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/salary")
+@CrossOrigin(origins = "*")
 public class SalaryController {
 
     @Autowired
     private SalaryService salaryService;
 
-    // 1. GET ALL SALARY RECORDS
+    @Autowired
+    private EmployeeValidationHelper validationHelper;
+
+    private void allowOnlyAccounts(int employeeId) {
+        validationHelper.validateAccountsEmployee(employeeId);
+    }
+
     @GetMapping("/all")
-    public ResponseEntity<List<EmployeeSalary>> getAllSalaries() {
+    public ResponseEntity<List<EmployeeSalary>> getAllSalaries(
+            @RequestHeader("X-Employee-Id") int employeeId) {
+
+        allowOnlyAccounts(employeeId);
+
         return ResponseEntity.ok(salaryService.getAllSalaries());
     }
 
-    // 2. GET SALARIES BY EMPLOYEE ID
     @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<List<EmployeeSalary>> getSalaryByEmployee(@PathVariable int employeeId) {
+    public ResponseEntity<List<EmployeeSalary>> getSalaryByEmployee(
+            @PathVariable int employeeId,
+            @RequestHeader("X-Employee-Id") int loggedInEmployeeId) {
+
+        allowOnlyAccounts(loggedInEmployeeId);
+
         return ResponseEntity.ok(salaryService.getSalaryByEmployeeId(employeeId));
     }
 
-    // 3. GET ALL PENDING SALARIES
     @GetMapping("/pending")
-    public ResponseEntity<List<EmployeeSalary>> getPendingSalaries() {
+    public ResponseEntity<List<EmployeeSalary>> getPendingSalaries(
+            @RequestHeader("X-Employee-Id") int employeeId) {
+
+        allowOnlyAccounts(employeeId);
+
         return ResponseEntity.ok(salaryService.getPendingSalaries());
     }
 
-    // 4. DISBURSE SINGLE SALARY
     @PutMapping("/disburse/{salaryId}")
     public ResponseEntity<EmployeeSalary> disburseSalary(
             @PathVariable int salaryId,
-            @RequestParam int loggedInEmployeeId) {
+            @RequestHeader("X-Employee-Id") int employeeId) {
 
-        return ResponseEntity.ok(
-                salaryService.disburseSalary(salaryId, loggedInEmployeeId)
-        );
+        allowOnlyAccounts(employeeId);
+
+        return ResponseEntity.ok(salaryService.disburseSalary(salaryId, employeeId));
     }
 
-    // 5. BULK DISBURSEMENT
     @PutMapping("/disburse/bulk")
     public ResponseEntity<List<EmployeeSalary>> bulkDisburse(
             @RequestBody List<Integer> salaryIds,
-            @RequestParam int loggedInEmployeeId) {
+            @RequestHeader("X-Employee-Id") int employeeId) {
 
-        return ResponseEntity.ok(
-                salaryService.bulkDisburse(salaryIds, loggedInEmployeeId)
-        );
+        allowOnlyAccounts(employeeId);
+
+        return ResponseEntity.ok(salaryService.bulkDisburse(salaryIds, employeeId));
     }
 
-    // 6. UPDATE SALARY DETAILS (Amount, Date, Description)
     @PutMapping("/update/{salaryId}")
     public ResponseEntity<EmployeeSalary> updateSalary(
             @PathVariable int salaryId,
             @RequestBody EmployeeSalary updatedData,
-            @RequestParam int updatedById) {
+            @RequestHeader("X-Employee-Id") int employeeId) {
 
-        return ResponseEntity.ok(
-                salaryService.updateSalary(salaryId, updatedData, updatedById)
-        );
+        allowOnlyAccounts(employeeId);
+
+        return ResponseEntity.ok(salaryService.updateSalary(salaryId, updatedData, employeeId));
     }
 
-    // 7. ADD NEW SALARY FOR AN EMPLOYEE
     @PostMapping("/add/{employeeId}")
     public ResponseEntity<EmployeeSalary> addSalary(
             @PathVariable int employeeId,
             @RequestBody EmployeeSalary newSalary,
-            @RequestParam int loggedInEmployeeId) {
+            @RequestHeader("X-Employee-Id") int loggedInEmployeeId) {
 
-        return ResponseEntity.ok(
-                salaryService.addSalary(employeeId, newSalary, loggedInEmployeeId)
-        );
+        allowOnlyAccounts(loggedInEmployeeId);
+
+        return ResponseEntity.ok(salaryService.addSalary(employeeId, newSalary, loggedInEmployeeId));
     }
-
 }

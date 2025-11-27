@@ -1,49 +1,57 @@
 import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const handleSuccess = (credentialResponse) => {
-    const decoded = jwtDecode(credentialResponse.credential);
+  const handleSuccess = async (googleResponse) => {
+    const googleToken = googleResponse.credential;
 
-    // Save user details
-    localStorage.setItem("user", JSON.stringify({
-      name: decoded.name,
-      email: decoded.email,
-      picture: decoded.picture,
-    }));
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: googleToken }),
+      });
 
-    navigate("/dashboard");
+      if (!response.ok) {
+        const msg = await response.text();
+        alert(msg || "Unauthorized user!");
+        return;
+      }
+
+      const data = await response.json();
+
+      // Save user data to localStorage (no JWT)
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          employeeId: data.employeeId,
+          name: data.name,
+          email: data.email,
+          department: data.department,
+        })
+      );
+
+      navigate("/dashboard");
+    } catch (e) {
+      alert("Login Failed: " + e.message);
+    }
   };
 
   const handleError = () => {
-    alert("Google login failed!");
+    alert("Google authentication failed.");
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gradient-to-br from-gray-100 to-gray-300">
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="bg-white p-10 rounded-xl shadow-lg text-center space-y-6 w-[400px]">
+        <h1 className="text-3xl font-bold text-gray-700">Payroll Login</h1>
 
-      <div className="bg-white p-8 rounded-3xl shadow-xl w-[380px] text-center">
+        <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
 
-        <h1 className="text-3xl font-extrabold text-gray-800">
-          Payroll Login
-        </h1>
-
-        <p className="text-gray-500 mb-6">
-          Sign in using your Google account
-        </p>
-
-        <div className="flex justify-center">
-          <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
-        </div>
-
-        <p className="text-xs text-gray-400 mt-6">
-          Secure authentication powered by Google OAuth
-        </p>
+        <p className="text-xs text-gray-400">Secure Google OAuth Login</p>
       </div>
-
     </div>
   );
 }

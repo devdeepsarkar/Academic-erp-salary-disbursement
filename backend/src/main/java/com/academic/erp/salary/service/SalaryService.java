@@ -27,30 +27,31 @@ public class SalaryService {
     @Autowired
     private EmployeeValidationHelper validationHelper;
 
-    // ================================
+    // This is used by Controller after extracting token
+    public int getEmployeeIdByEmail(String email) {
+        Employee emp = employeeRepo.findByEmail(email);
+        if (emp == null) {
+            throw new RuntimeException("No employee found for email: " + email);
+        }
+        return emp.getEmployeeId();
+    }
+
     // 1. Get All Salary Records
-    // ================================
     public List<EmployeeSalary> getAllSalaries() {
         return salaryRepo.findAll();
     }
 
-    // ================================
     // 2. Get Salaries of a Specific Employee
-    // ================================
     public List<EmployeeSalary> getSalaryByEmployeeId(int employeeId) {
         return salaryRepo.findByEmployee_EmployeeId(employeeId);
     }
 
-    // ================================
     // 3. Get All Pending Salaries
-    // ================================
     public List<EmployeeSalary> getPendingSalaries() {
         return salaryRepo.findByStatus(SalaryStatus.PENDING);
     }
 
-    // ================================
     // 4. Disburse a Single Salary
-    // ================================
     public EmployeeSalary disburseSalary(int salaryId, int loggedInEmployeeId) {
 
         validationHelper.validateAccountsEmployee(loggedInEmployeeId);
@@ -63,37 +64,32 @@ public class SalaryService {
             throw new RuntimeException("You cannot disburse your own salary!");
         }
 
-        // Allow disbursement only if salary is PENDING
         if (salary.getStatus() != SalaryStatus.PENDING) {
-            throw new RuntimeException("Cannot disburse salary. Status must be PENDING!");
+            throw new RuntimeException("Salary already disbursed!");
         }
 
-        // Update Salary Status
         salary.setStatus(SalaryStatus.DISBURSED);
-        salary.setDisbursedBy(employeeRepo.findById(loggedInEmployeeId)
-                .orElseThrow(() -> new RuntimeException("Employee performing disbursement not found!")));
+        salary.setDisbursedBy(
+                employeeRepo.findById(loggedInEmployeeId)
+                        .orElseThrow(() -> new RuntimeException("Employee not found!")));
         salary.setDisbursedAt(LocalDateTime.now());
 
         return salaryRepo.save(salary);
     }
 
-
-    // ================================
     // 5. Bulk Disbursement
-    // ================================
     public List<EmployeeSalary> bulkDisburse(List<Integer> salaryIds, int loggedInEmployeeId) {
 
         validationHelper.validateAccountsEmployee(loggedInEmployeeId);
 
         List<EmployeeSalary> result = new ArrayList<>();
 
-        // First validate all before processing
         for (int id : salaryIds) {
             EmployeeSalary salary = salaryRepo.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Salary record not found: " + id));
+                    .orElseThrow(() -> new RuntimeException("Salary not found: " + id));
 
             if (salary.getEmployee().getEmployeeId() == loggedInEmployeeId) {
-                throw new RuntimeException("Cannot disburse your own salary. SalaryId: " + id);
+                throw new RuntimeException("Cannot disburse your own salary: " + id);
             }
 
             if (salary.getStatus() != SalaryStatus.PENDING) {
@@ -101,19 +97,14 @@ public class SalaryService {
             }
         }
 
-        // All valid → Now disburse
         for (int id : salaryIds) {
-            EmployeeSalary salary = disburseSalary(id, loggedInEmployeeId);
-            result.add(salary);
+            result.add(disburseSalary(id, loggedInEmployeeId));
         }
 
         return result;
     }
 
-
-    // ================================
-    // 6. Update Salary Amount / Metadata
-    // ================================
+    // 6. Update Salary
     public EmployeeSalary updateSalary(int salaryId, EmployeeSalary newData, int updatedById) {
 
         validationHelper.validateAccountsEmployee(updatedById);
@@ -122,27 +113,25 @@ public class SalaryService {
                 .orElseThrow(() -> new RuntimeException("Salary not found!"));
 
         if (existing.getStatus() == SalaryStatus.DISBURSED) {
-            throw new RuntimeException("Cannot modify salary after disbursement!");
+            throw new RuntimeException("Cannot modify already disbursed salary!");
         }
 
-        // Validate updater
         Employee updater = employeeRepo.findById(updatedById)
-                .orElseThrow(() -> new RuntimeException("Updater employee not found!"));
+                .orElseThrow(() -> new RuntimeException("Updater not found!"));
 
         existing.setAmount(newData.getAmount());
         existing.setDescription(newData.getDescription());
         if (newData.getPaymentDate() != null) {
             existing.setPaymentDate(newData.getPaymentDate());
         }
+
         existing.setUpdatedBy(updater);
         existing.setUpdatedAt(LocalDateTime.now());
 
         return salaryRepo.save(existing);
     }
 
-    // ================================
     // 7. Add new Salary for an Employee
-    // ================================
     public EmployeeSalary addSalary(int employeeId, EmployeeSalary newSalary, int loggedInEmployeeId) {
 
         validationHelper.validateAccountsEmployee(loggedInEmployeeId);
@@ -154,13 +143,12 @@ public class SalaryService {
             throw new RuntimeException("You cannot add salary to yourself!");
         }
 
-        // if frontend date is missing, set default
         if (newSalary.getPaymentDate() == null) {
             newSalary.setPaymentDate(LocalDate.now());
         }
 
         if (salaryRepo.existsByEmployeeEmployeeIdAndPaymentDate(employeeId, newSalary.getPaymentDate())) {
-            throw new RuntimeException("Salary already exists for this employee and month!");
+            throw new RuntimeException("Salary already exists for this employee this month!");
         }
 
         newSalary.setEmployee(employee);
@@ -170,6 +158,5 @@ public class SalaryService {
 
         return salaryRepo.save(newSalary);
     }
-
 
 }
