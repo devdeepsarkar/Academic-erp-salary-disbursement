@@ -3,6 +3,7 @@ package com.academic.erp.salary.service;
 import com.academic.erp.salary.entity.Employee;
 import com.academic.erp.salary.entity.EmployeeSalary;
 import com.academic.erp.salary.entity.SalaryStatus;
+import com.academic.erp.salary.helper.EmployeeValidationHelper;
 import com.academic.erp.salary.repository.EmployeeRepository;
 import com.academic.erp.salary.repository.EmployeeSalaryRepository;
 
@@ -22,6 +23,9 @@ public class SalaryService {
 
     @Autowired
     private EmployeeRepository employeeRepo;
+
+    @Autowired
+    private EmployeeValidationHelper validationHelper;
 
     // ================================
     // 1. Get All Salary Records
@@ -48,6 +52,8 @@ public class SalaryService {
     // 4. Disburse a Single Salary
     // ================================
     public EmployeeSalary disburseSalary(int salaryId, int loggedInEmployeeId) {
+
+        validationHelper.validateAccountsEmployee(loggedInEmployeeId);
 
         EmployeeSalary salary = salaryRepo.findById(salaryId)
                 .orElseThrow(() -> new RuntimeException("Salary record not found."));
@@ -76,6 +82,9 @@ public class SalaryService {
     // 5. Bulk Disbursement
     // ================================
     public List<EmployeeSalary> bulkDisburse(List<Integer> salaryIds, int loggedInEmployeeId) {
+
+        validationHelper.validateAccountsEmployee(loggedInEmployeeId);
+
         List<EmployeeSalary> result = new ArrayList<>();
 
         // First validate all before processing
@@ -107,6 +116,8 @@ public class SalaryService {
     // ================================
     public EmployeeSalary updateSalary(int salaryId, EmployeeSalary newData, int updatedById) {
 
+        validationHelper.validateAccountsEmployee(updatedById);
+
         EmployeeSalary existing = salaryRepo.findById(salaryId)
                 .orElseThrow(() -> new RuntimeException("Salary not found!"));
 
@@ -120,7 +131,9 @@ public class SalaryService {
 
         existing.setAmount(newData.getAmount());
         existing.setDescription(newData.getDescription());
-        existing.setPaymentDate(newData.getPaymentDate());
+        if (newData.getPaymentDate() != null) {
+            existing.setPaymentDate(newData.getPaymentDate());
+        }
         existing.setUpdatedBy(updater);
         existing.setUpdatedAt(LocalDateTime.now());
 
@@ -131,6 +144,8 @@ public class SalaryService {
     // 7. Add new Salary for an Employee
     // ================================
     public EmployeeSalary addSalary(int employeeId, EmployeeSalary newSalary, int loggedInEmployeeId) {
+
+        validationHelper.validateAccountsEmployee(loggedInEmployeeId);
 
         Employee employee = employeeRepo.findById(employeeId)
                 .orElseThrow(() -> new RuntimeException("Employee not found: " + employeeId));
