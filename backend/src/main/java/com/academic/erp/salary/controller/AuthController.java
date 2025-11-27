@@ -6,6 +6,8 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+@Tag(name = "Authentication", description = "Google OAuth authentication endpoints")
 public class AuthController {
 
     @Autowired
@@ -29,6 +32,7 @@ public class AuthController {
     @Value("${google.clientId:YOUR_GOOGLE_CLIENT_ID}")
     private String googleClientId;
 
+    @Operation(summary = "Google OAuth Login", description = "Authenticate user with Google OAuth token and return employee information")
     @PostMapping("/google-login")
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> body) throws Exception {
         String idTokenString = body.get("token");
