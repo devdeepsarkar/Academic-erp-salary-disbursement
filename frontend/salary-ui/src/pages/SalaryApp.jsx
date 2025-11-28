@@ -51,7 +51,7 @@ export default function SalaryApp() {
 
           <div className="bg-white p-4 rounded-2xl shadow-sm space-y-3 border">
             <div className="text-sm text-black-600">
-              Selected Employee IDs:{" "}
+              Selected Salary ID's:{" "}
               {s.bulkSelected.size > 0
                 ? Array.from(s.bulkSelected).join(", ")
                 : "None"}

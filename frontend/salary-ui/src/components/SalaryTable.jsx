@@ -34,7 +34,7 @@ export default function SalaryTable({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-3 py-2 text-left text-xs">Sel</th>
-              {/* <th className="px-3 py-2 text-left text-xs">ID</th> */}
+              <th className="px-3 py-2 text-left text-xs">Salary ID</th>
               <th className="px-3 py-2 text-left text-xs">Emp ID</th>
               <th className="px-3 py-2 text-left text-xs">First Name</th>
               <th className="px-3 py-2 text-left text-xs">Last Name</th>
@@ -59,7 +59,7 @@ export default function SalaryTable({
                   />
                 </td>
 
-                {/* <td className="px-3 py-2 text-sm">{s.id}</td> */}
+                <td className="px-3 py-2 text-sm">{s.id}</td>
                 <td className="px-3 py-2 text-sm">{s.employee?.employeeId}</td>
 
                 {/* New Added Columns */}
